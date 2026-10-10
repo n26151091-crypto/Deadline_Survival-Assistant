@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#6757e8" />
+  <meta
+    name="description"
+    content="研究生 Deadline 生存助手：依照截止時間、重要程度與預估工時，自動排序任務並推薦現在最該做的事情。"
+  />
+  <title>研究生 Deadline 生存助手</title>
+
+  <style>
+    :root {
+      --bg: #f5f6fb;
+      --surface: rgba(255, 255, 255, 0.9);
+      --surface-solid: #ffffff;
+      --surface-soft: #f0f1f8;
+      --text: #202338;
+      --text-soft: #697089;
+      --border: #e4e6f0;
+      --primary: #6757e8;
+      --primary-strong: #5141cf;
+      --primary-soft: #eeebff;
+      --accent: #15a889;
+      --accent-soft: #e5f8f3;
+      --danger: #e04f5f;
+      --danger-soft: #fff0f2;
+      --warning: #d78912;
+      --warning-soft: #fff7e4;
+      --info: #397bd4;
+      --info-soft: #eaf3ff;
+      --shadow-sm: 0 8px 24px rgba(39, 43, 74, 0.08);
+      --shadow-lg: 0 22px 60px rgba(39, 43, 74, 0.13);
+      --radius-sm: 12px;
+      --radius-md: 18px;
+      --radius-lg: 26px;
+      --focus: 0 0 0 4px rgba(103, 87, 232, 0.18);
+    }
+
+    html[data-theme="dark"] {
+      --bg: #141622;
+      --surface: rgba(31, 34, 51, 0.9);
+      --surface-solid: #1f2233;
+      --surface-soft: #292d42;
+      --text: #f4f5ff;
+      --text-soft: #aeb4cc;
+      --border: #373b52;
+      --primary: #9c8cff;
+      --primary-strong: #b2a6ff;
+      --primary-soft: #302b55;
+      --accent: #53d7b7;
+      --accent-soft: #173f39;
+      --danger: #ff7c8a;
+      --danger-soft: #48252d;
+      --warning: #ffc35f;
+      --warning-soft: #46381f;
+      --info: #7bb6ff;
+      --info-soft: #23364f;
+      --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 22px 60px rgba(0, 0, 0, 0.32);
+      --focus: 0 0 0 4px rgba(156, 140, 255, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(103, 87, 232, 0.12), transparent 30rem),
+        radial-gradient(circle at 100% 12%, rgba(21, 168, 137, 0.11), transparent 28rem),
+        var(--bg);
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
+        "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.6;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .app-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 54px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 auto;
+      border-radius: 15px;
+      background: linear-gradient(135deg, var(--primary), #8e7dff);
+      color: #fff;
+      font-size: 22px;
+      box-shadow: 0 10px 24px rgba(103, 87, 232, 0.28);
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-copy strong {
+      display: block;
+      font-size: 17px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-copy span {
+      display: block;
+      color: var(--text-soft);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 10px 15px;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: transparent;
+      color: var(--text);
+      font-weight: 750;
+      text-decoration: none;
+      transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        box-shadow 0.16s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    dialog button:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), #7d6df0);
+      box-shadow: 0 10px 22px rgba(103, 87, 232, 0.22);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--primary-strong), var(--primary));
+    }
+
+    .btn-secondary {
+      border-color: var(--border);
+      background: var(--surface-solid);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-ghost {
+      border-color: var(--border);
+      background: transparent;
+    }
+
+    .btn-danger {
+      color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+      background: var(--danger-soft);
+    }
+
+    .btn-small {
+      min-height: 36px;
+      padding: 7px 11px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      background: var(--surface-solid);
+      font-size: 18px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(28px, 5vw, 54px);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(135deg, rgba(67, 55, 194, 0.97), rgba(115, 87, 232, 0.94) 52%, rgba(21, 168, 137, 0.9)),
+        #6757e8;
+      color: #fff;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      pointer-events: none;
+    }
+
+    .hero::before {
+      width: 280px;
+      height: 280px;
+      top: -155px;
+      right: -55px;
+    }
+
+    .hero::after {
+      width: 210px;
+      height: 210px;
+      bottom: -130px;
+      left: 38%;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.13);
+      font-size: 13px;
+      font-weight: 750;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero h1 {
+      margin: 18px 0 12px;
+      font-size: clamp(32px, 6vw, 56px);
+      line-height: 1.12;
+      letter-spacing: -0.035em;
+    }
+
+    .hero p {
+      max-width: 660px;
+      margin: 0;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: clamp(15px, 2vw, 18px);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .hero .btn-primary {
+      color: var(--primary-strong);
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(20, 22, 34, 0.18);
+    }
+
+    .hero .btn-ghost {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.34);
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .hero .btn-ghost:hover {
+      border-color: rgba(255, 255, 255, 0.75);
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .today-chip {
+      position: absolute;
+      right: clamp(22px, 4vw, 42px);
+      bottom: clamp(20px, 4vw, 36px);
+      z-index: 1;
+      display: grid;
+      min-width: 126px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.12);
+      text-align: center;
+      backdrop-filter: blur(12px);
+    }
+
+    .today-chip strong {
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    .today-chip span {
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 12px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin: 22px 0;
+    }
+
+    .stat-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-height: 104px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(16px);
+    }
+
+    .stat-icon {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      flex: 0 0 auto;
+      border-radius: 14px;
+      background: var(--primary-soft);
+      font-size: 22px;
+    }
+
+    .stat-card:nth-child(2) .stat-icon {
+      background: var(--accent-soft);
+    }
+
+    .stat-card:nth-child(3) .stat-icon {
+      background: var(--danger-soft);
+    }
+
+    .stat-card:nth-child(4) .stat-icon {
+      background: var(--warning-soft);
+    }
+
+    .stat-copy {
+      min-width: 0;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 26px;
+      font-weight: 850;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+    }
+
+    .stat-label {
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 7px;
+      margin-top: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-soft);
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--warning), var(--accent));
+      transition: width 0.35s ease;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(16px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 22px 0;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.3;
+    }
+
+    .card-subtitle {
+      margin: 5px 0 0;
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .card-body {
+      padding: 22px;
+    }
+
+    .recommendation {
+      position: relative;
+      overflow: hidden;
+      min-height: 248px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--primary-soft) 75%, transparent), transparent 58%),
+        var(--surface);
+    }
+
+    .recommendation::after {
+      content: "🔥";
+      position: absolute;
+      right: 20px;
+      bottom: -18px;
+      font-size: 96px;
+      opacity: 0.08;
+      transform: rotate(-8deg);
+      pointer-events: none;
+    }
+
+    .recommendation-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .recommendation-empty {
+      display: grid;
+      place-items: center;
+      min-height: 150px;
+      text-align: center;
+    }
+
+    .recommendation-empty .empty-icon {
+      font-size: 42px;
+    }
+
+    .recommendation-empty h3 {
+      margin: 8px 0 4px;
+      font-size: 19px;
+    }
+
+    .recommendation-empty p {
+      max-width: 390px;
+      margin: 0 0 14px;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .recommendation-task {
+      padding: 4px 0 2px;
+    }
+
+    .recommendation-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--danger-soft);
+      color: var(--danger);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .recommendation-task h3 {
+      margin: 14px 0 8px;
+      font-size: clamp(23px, 4vw, 32px);
+      line-height: 1.24;
+      letter-spacing: -0.025em;
+      overflow-wrap: anywhere;
+    }
+
+    .recommendation-task p {
+      margin: 0;
+      color: var(--text-soft);
+    }
+
+    .reason-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .reason-chip,
+    .meta-chip,
+    .category-chip,
+    .score-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface-solid);
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .score-chip {
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+      background: var(--primary-soft);
+    }
+
+    .form-card {
+      grid-row: span 2;
+    }
+
+    .task-form,
+    .edit-form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field-full {
+      grid-column: 1 / -1;
+    }
+
+    .field label,
+    .field-label {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .field-hint {
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .input,
+    .select,
+    .textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-solid);
+      color: var(--text);
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .input,
+    .select {
+      min-height: 44px;
+      padding: 10px 12px;
+    }
+
+    .textarea {
+      min-height: 86px;
+      padding: 11px 12px;
+      resize: vertical;
+    }
+
+    .input:hover,
+    .select:hover,
+    .textarea:hover {
+      border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    .importance-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .importance-output {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 850;
+    }
+
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-soft);
+      font-size: 11px;
+    }
+
+    .form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-top: 2px;
+    }
+
+    .helper-note {
+      display: flex;
+      gap: 10px;
+      padding: 12px 13px;
+      border: 1px dashed color-mix(in srgb, var(--primary) 36%, var(--border));
+      border-radius: 12px;
+      color: var(--text-soft);
+      background: var(--primary-soft);
+      font-size: 12px;
+    }
+
+    .tasks-card {
+      margin-top: 22px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 16px 22px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface-soft) 65%, transparent);
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-wrap .input {
+      padding-left: 38px;
+    }
+
+    .search-icon {
+      position: absolute;
+      top: 50%;
+      left: 13px;
+      color: var(--text-soft);
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 12px;
+      padding: 18px 22px 22px;
+    }
+
+    .task-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--primary);
+      border-radius: 16px;
+      background: var(--surface-solid);
+      transition:
+        transform 0.17s ease,
+        border-color 0.17s ease,
+        box-shadow 0.17s ease,
+        opacity 0.17s ease;
+    }
+
+    .task-card:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+      box-shadow: 0 12px 24px rgba(39, 43, 74, 0.08);
+    }
+
+    .task-card.priority-critical {
+      border-left-color: var(--danger);
+    }
+
+    .task-card.priority-high {
+      border-left-color: var(--warning);
+    }
+
+    .task-card.priority-medium {
+      border-left-color: var(--info);
+    }
+
+    .task-card.priority-low {
+      border-left-color: var(--accent);
+    }
+
+    .task-card.is-completed {
+      opacity: 0.7;
+      border-left-color: var(--accent);
+    }
+
+    .task-card.is-overdue:not(.is-completed) {
+      background:
+        linear-gradient(90deg, var(--danger-soft), transparent 24%),
+        var(--surface-solid);
+    }
+
+    .task-main {
+      min-width: 0;
+    }
+
+    .task-topline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .category-chip {
+      color: var(--text);
+      background: var(--surface-soft);
+    }
+
+    .task-title {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .is-completed .task-title {
+      color: var(--text-soft);
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+    }
+
+    .task-note {
+      margin: 6px 0 0;
+      color: var(--text-soft);
+      font-size: 13px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .meta-chip.is-danger {
+      color: var(--danger);
+      border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+      background: var(--danger-soft);
+    }
+
+    .meta-chip.is-warning {
+      color: var(--warning);
+      border-color: color-mix(in srgb, var(--warning) 35%, var(--border));
+      background: var(--warning-soft);
+    }
+
+    .task-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      justify-content: flex-end;
+      gap: 8px;
+      max-width: 240px;
+    }
+
+    .empty-state {
+      display: grid;
+      place-items: center;
+      min-height: 260px;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      font-size: 52px;
+      filter: grayscale(0.1);
+    }
+
+    .empty-state h3 {
+      margin: 10px 0 4px;
+      font-size: 20px;
+    }
+
+    .empty-state p {
+      max-width: 420px;
+      margin: 0 0 16px;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 24px;
+      padding: 16px 4px 0;
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    dialog {
+      width: min(720px, calc(100% - 28px));
+      max-height: min(86vh, 780px);
+      padding: 0;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: var(--surface-solid);
+      color: var(--text);
+      box-shadow: var(--shadow-lg);
+    }
+
+    dialog::backdrop {
+      background: rgba(14, 16, 28, 0.56);
+      backdrop-filter: blur(5px);
+    }
+
+    .dialog-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface-solid) 92%, transparent);
+      backdrop-filter: blur(12px);
+    }
+
+    .dialog-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .dialog-body {
+      padding: 22px;
+    }
+
+    .spec-section + .spec-section {
+      margin-top: 24px;
+    }
+
+    .spec-section h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .spec-section p {
+      margin: 0;
+      color: var(--text-soft);
+    }
+
+    .spec-list {
+      display: grid;
+      gap: 9px;
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .spec-list li {
+      display: flex;
+      gap: 9px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-soft);
+    }
+
+    .formula-box {
+      margin-top: 10px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface-soft);
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: min(390px, calc(100% - 44px));
+      padding: 13px 15px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface-solid);
+      color: var(--text);
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transform: translateY(18px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .toast.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    noscript {
+      display: block;
+      margin: 20px auto;
+      padding: 14px;
+      max-width: 760px;
+      border: 1px solid var(--danger);
+      border-radius: 12px;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    @media (max-width: 920px) {
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-card {
+        grid-row: auto;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .search-wrap {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app-shell {
+        width: min(100% - 22px, 1180px);
+        padding-top: 14px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .brand-copy span {
+        max-width: 170px;
+      }
+
+      .topbar .spec-label {
+        display: none;
+      }
+
+      .hero {
+        padding: 28px 22px 108px;
+      }
+
+      .today-chip {
+        left: 22px;
+        right: auto;
+        bottom: 20px;
+        grid-template-columns: auto auto;
+        align-items: center;
+        gap: 9px;
+        min-width: 0;
+        padding: 10px 13px;
+        text-align: left;
+      }
+
+      .today-chip strong {
+        font-size: 17px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat-card {
+        min-height: 92px;
+        padding: 14px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field-full {
+        grid-column: auto;
+      }
+
+      .task-card {
+        grid-template-columns: 1fr;
+      }
+
+      .task-actions {
+        justify-content: flex-start;
+        max-width: none;
+      }
+
+      .footer {
+        flex-direction: column;
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .stats-grid {
+        gap: 10px;
+      }
+
+      .stat-card {
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .stat-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 18px;
+      }
+
+      .stat-value {
+        font-size: 22px;
+      }
+
+      .card-header,
+      .card-body,
+      .task-list {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+        padding: 14px 16px;
+      }
+
+      .search-wrap {
+        grid-column: auto;
+      }
+
+      .toolbar .btn {
+        width: 100%;
+      }
+
+      .form-actions .btn {
+        flex: 1 1 auto;
+      }
+
+      .task-actions .btn {
+        flex: 1 1 auto;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <noscript>此網站需要啟用 JavaScript 才能新增、排序與儲存任務。</noscript>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">🎓</div>
+        <div class="brand-copy">
+          <strong>Deadline 生存助手</strong>
+          <span>研究生的任務優先順序決策工具</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="btn btn-secondary" id="openSpecButton" type="button">
+          <span aria-hidden="true">📘</span>
+          <span class="spec-label">作品規格</span>
+        </button>
+        <button
+          class="icon-button"
+          id="themeButton"
+          type="button"
+          aria-label="切換深色模式"
+          title="切換深色模式"
+        >
+          🌙
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="heroTitle">
+        <div class="hero-content">
+          <span class="hero-kicker">✨ Vibe Coding 互動網頁作品</span>
+          <h1 id="heroTitle">事情很多沒關係，<br />先找出最該做的一件。</h1>
+          <p>
+            輸入截止時間、重要程度與預估工時，系統會自動計算優先分數、
+            排序所有任務，並直接推薦你現在最應該先完成的事情。
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#addTaskSection">＋ 新增第一個任務</a>
+            <button class="btn btn-ghost js-load-sample" type="button">
+              🧪 載入範例資料
+            </button>
+          </div>
+        </div>
+
+        <div class="today-chip" aria-label="今天日期">
+          <strong id="todayDate">--</strong>
+          <span id="todayWeekday">--</span>
+        </div>
+      </section>
+
+      <section class="stats-grid" aria-label="任務統計">
+        <article class="stat-card">
+          <div class="stat-icon" aria-hidden="true">📌</div>
+          <div class="stat-copy">
+            <span class="stat-value" id="activeCount">0</span>
+            <span class="stat-label">待處理任務</span>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-icon" aria-hidden="true">✅</div>
+          <div class="stat-copy">
+            <span class="stat-value" id="completedCount">0</span>
+            <span class="stat-label">已完成任務</span>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-icon" aria-hidden="true">⏰</div>
+          <div class="stat-copy">
+            <span class="stat-value" id="overdueCount">0</span>
+            <span class="stat-label">已逾期任務</span>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-icon" aria-hidden="true">📈</div>
+          <div class="stat-copy" style="width: 100%">
+            <span class="stat-value" id="completionRate">0%</span>
+            <span class="stat-label">整體完成率</span>
+            <div class="progress-track" aria-hidden="true">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="section-grid">
+        <article class="card recommendation" aria-labelledby="recommendationTitle">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="recommendationTitle">🔥 現在最該做</h2>
+              <p class="card-subtitle">依優先分數即時更新，不必自己苦惱排序。</p>
+            </div>
+          </div>
+          <div class="card-body recommendation-content" id="recommendationContent" aria-live="polite"></div>
+        </article>
+
+        <article class="card form-card" id="addTaskSection" aria-labelledby="addTaskTitle">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="addTaskTitle">＋ 新增任務</h2>
+              <p class="card-subtitle">越接近截止、越重要、工時越長，優先分數越高。</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <form class="task-form" id="taskForm">
+              <div class="form-grid">
+                <div class="field field-full">
+                  <label for="taskTitle">任務名稱</label>
+                  <input
+                    class="input"
+                    id="taskTitle"
+                    name="title"
+                    type="text"
+                    maxlength="60"
+                    placeholder="例如：完成生成式 AI 作業"
+                    autocomplete="off"
+                    required
+                  />
+                </div>
+
+                <div class="field">
+                  <label for="taskCategory">任務類型</label>
+                  <select class="select" id="taskCategory" name="category">
+                    <option value="作業">📚 作業</option>
+                    <option value="報告">📊 報告</option>
+                    <option value="研究">🔬 研究</option>
+                    <option value="考試">📝 考試</option>
+                    <option value="會議">👥 會議</option>
+                    <option value="生活">🏠 生活</option>
+                    <option value="其他">📎 其他</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="taskDue">截止日期與時間</label>
+                  <input class="input" id="taskDue" name="due" type="datetime-local" required />
+                </div>
+
+                <div class="field">
+                  <span class="field-label">重要程度</span>
+                  <div class="importance-row">
+                    <input
+                      id="taskImportance"
+                      name="importance"
+                      type="range"
+                      min="1"
+                      max="5"
+                      value="3"
+                      step="1"
+                      aria-label="重要程度，一到五"
+                    />
+                    <output class="importance-output" id="importanceOutput" for="taskImportance">3</output>
+                  </div>
+                  <div class="range-labels" aria-hidden="true">
+                    <span>普通</span>
+                    <span>非常重要</span>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="taskHours">預估工時（小時）</label>
+                  <input
+                    class="input"
+                    id="taskHours"
+                    name="hours"
+                    type="number"
+                    min="0.5"
+                    max="100"
+                    step="0.5"
+                    value="2"
+                    required
+                  />
+                </div>
+
+                <div class="field field-full">
+                  <label for="taskNote">補充說明（選填）</label>
+                  <textarea
+                    class="textarea"
+                    id="taskNote"
+                    name="note"
+                    maxlength="160"
+                    placeholder="例如：需要整理課堂筆記、製作簡報並上傳 GitHub Pages"
+                  ></textarea>
+                  <span class="field-hint">最多 160 個字，幫助未來的自己快速進入狀況。</span>
+                </div>
+              </div>
+
+              <div class="helper-note">
+                <span aria-hidden="true">💡</span>
+                <span>
+                  優先分數會同時考量截止時間、重要程度、預估工時與剩餘時間壓力，
+                  並不是只看哪一個最早到期。
+                </span>
+              </div>
+
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit">＋ 加入任務</button>
+                <button class="btn btn-secondary" id="resetFormButton" type="reset">清除欄位</button>
+              </div>
+            </form>
+          </div>
+        </article>
+
+        <article class="card" aria-labelledby="quickGuideTitle">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="quickGuideTitle">🧭 快速判斷方式</h2>
+              <p class="card-subtitle">系統會把每項任務轉成可比較的優先分數。</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <ul class="spec-list" style="margin-top: 0">
+              <li><span>⏳</span><span><strong>截止壓力：</strong>越接近 Deadline，急迫分數越高。</span></li>
+              <li><span>⭐</span><span><strong>重要程度：</strong>使用 1～5 級反映任務影響。</span></li>
+              <li><span>🛠️</span><span><strong>工作量：</strong>工時較長的任務會被提早提醒。</span></li>
+              <li><span>🎯</span><span><strong>直接推薦：</strong>系統自動選出現在最該做的一件。</span></li>
+            </ul>
+          </div>
+        </article>
+      </section>
+
+      <section class="card tasks-card" aria-labelledby="taskListTitle">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="taskListTitle">📋 我的任務</h2>
+            <p class="card-subtitle" id="listSummary">目前沒有任務。</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-wrap">
+            <span class="search-icon" aria-hidden="true">🔎</span>
+            <label class="sr-only" for="searchInput">搜尋任務</label>
+            <input class="input" id="searchInput" type="search" placeholder="搜尋任務、類型或備註" />
+          </div>
+
+          <label class="sr-only" for="statusFilter">篩選狀態</label>
+          <select class="select" id="statusFilter">
+            <option value="all">全部狀態</option>
+            <option value="active">待處理</option>
+            <option value="completed">已完成</option>
+            <option value="overdue">已逾期</option>
+          </select>
+
+          <label class="sr-only" for="sortSelect">排序方式</label>
+          <select class="select" id="sortSelect">
+            <option value="priority">依優先分數</option>
+            <option value="deadline">依截止時間</option>
+            <option value="importance">依重要程度</option>
+            <option value="created">依新增時間</option>
+            <option value="name">依任務名稱</option>
+          </select>
+
+          <button class="btn btn-danger btn-small" id="clearCompletedButton" type="button">
+            清除已完成
+          </button>
+        </div>
+
+        <div class="task-list" id="taskList" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Deadline 生存助手｜單一 index.html、無外部套件、支援 LocalStorage</span>
+      <span>資料只儲存在目前瀏覽器，不會上傳到伺服器。</span>
+    </footer>
+  </div>
+
+  <dialog id="specDialog" aria-labelledby="specDialogTitle">
+    <div class="dialog-header">
+      <h2 id="specDialogTitle">📘 作品規格與開發紀錄</h2>
+      <button class="icon-button js-close-spec" type="button" aria-label="關閉規格書">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <section class="spec-section">
+        <h3>一、作品目標</h3>
+        <p>
+          解決學生同時面對多項作業、報告、考試與研究任務時，
+          不知道應該先做哪一項的問題。網站將使用者輸入的資訊轉換成優先分數，
+          再直接推薦目前最值得先處理的任務。
+        </p>
+      </section>
+
+      <section class="spec-section">
+        <h3>二、主要功能</h3>
+        <ul class="spec-list">
+          <li><span>1.</span><span>新增、編輯、完成、恢復與刪除任務。</span></li>
+          <li><span>2.</span><span>依截止時間、重要程度與預估工時計算優先分數。</span></li>
+          <li><span>3.</span><span>自動排序並顯示「現在最該做」的任務。</span></li>
+          <li><span>4.</span><span>提供搜尋、狀態篩選、不同排序方式及完成率統計。</span></li>
+          <li><span>5.</span><span>使用 LocalStorage，在重新整理後保留任務。</span></li>
+          <li><span>6.</span><span>支援手機版排版與深色模式。</span></li>
+        </ul>
+      </section>
+
+      <section class="spec-section">
+        <h3>三、優先分數概念</h3>
+        <p>分數不是人工智慧預測，而是清楚可解釋的規則計算：</p>
+        <div class="formula-box">
+          <strong>優先分數 ＝ 截止急迫度 ＋ 重要程度 ＋ 工作量 ＋ 剩餘時間壓力</strong><br />
+          截止越近、重要性越高、工時越長，而且剩餘時間相對不足時，分數會越高。
+          已完成任務不會再被推薦。
+        </div>
+      </section>
+
+      <section class="spec-section">
+        <h3>四、和 AI 反覆調整的內容</h3>
+        <ul class="spec-list">
+          <li><span>①</span><span>第一版只有新增與刪除，後來加入優先分數，避免只是普通 To-do List。</span></li>
+          <li><span>②</span><span>加入「現在最該做」卡片，讓使用者不必自己判斷排序結果。</span></li>
+          <li><span>③</span><span>加入 LocalStorage，解決重新整理後資料消失的問題。</span></li>
+          <li><span>④</span><span>加入完成率、逾期數量、搜尋、篩選與編輯功能，提升實用性。</span></li>
+          <li><span>⑤</span><span>重新調整手機排版、對比與按鈕尺寸，讓小螢幕也能操作。</span></li>
+        </ul>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="editDialog" aria-labelledby="editDialogTitle">
+    <div class="dialog-header">
+      <h2 id="editDialogTitle">✏️ 編輯任務</h2>
+      <button class="icon-button js-close-edit" type="button" aria-label="關閉編輯視窗">✕</button>
+    </div>
+
+    <div class="dialog-body">
+      <form class="edit-form" id="editForm">
+        <input id="editTaskId" type="hidden" />
+
+        <div class="form-grid">
+          <div class="field field-full">
+            <label for="editTitle">任務名稱</label>
+            <input class="input" id="editTitle" type="text" maxlength="60" required />
+          </div>
+
+          <div class="field">
+            <label for="editCategory">任務類型</label>
+            <select class="select" id="editCategory">
+              <option value="作業">📚 作業</option>
+              <option value="報告">📊 報告</option>
+              <option value="研究">🔬 研究</option>
+              <option value="考試">📝 考試</option>
+              <option value="會議">👥 會議</option>
+              <option value="生活">🏠 生活</option>
+              <option value="其他">📎 其他</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="editDue">截止日期與時間</label>
+            <input class="input" id="editDue" type="datetime-local" required />
+          </div>
+
+          <div class="field">
+            <span class="field-label">重要程度</span>
+            <div class="importance-row">
+              <input id="editImportance" type="range" min="1" max="5" step="1" />
+              <output class="importance-output" id="editImportanceOutput" for="editImportance">3</output>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="editHours">預估工時（小時）</label>
+            <input class="input" id="editHours" type="number" min="0.5" max="100" step="0.5" required />
+          </div>
+
+          <div class="field field-full">
+            <label for="editNote">補充說明</label>
+            <textarea class="textarea" id="editNote" maxlength="160"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">儲存修改</button>
+          <button class="btn btn-secondary js-close-edit" type="button">取消</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span id="toastIcon" aria-hidden="true">✅</span>
+    <span id="toastMessage">已完成</span>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "deadline-survival.tasks.v1";
+      const THEME_KEY = "deadline-survival.theme.v1";
+
+      const CATEGORY_ICONS = {
+        "作業": "📚",
+        "報告": "📊",
+        "研究": "🔬",
+        "考試": "📝",
+        "會議": "👥",
+        "生活": "🏠",
+        "其他": "📎"
+      };
+
+      const elements = {
+        taskForm: document.getElementById("taskForm"),
+        taskTitle: document.getElementById("taskTitle"),
+        taskCategory: document.getElementById("taskCategory"),
+        taskDue: document.getElementById("taskDue"),
+        taskImportance: document.getElementById("taskImportance"),
+        importanceOutput: document.getElementById("importanceOutput"),
+        taskHours: document.getElementById("taskHours"),
+        taskNote: document.getElementById("taskNote"),
+        resetFormButton: document.getElementById("resetFormButton"),
+
+        activeCount: document.getElementById("activeCount"),
+        completedCount: document.getElementById("completedCount"),
+        overdueCount: document.getElementById("overdueCount"),
+        completionRate: document.getElementById("completionRate"),
+        progressBar: document.getElementById("progressBar"),
+
+        recommendationContent: document.getElementById("recommendationContent"),
+        taskList: document.getElementById("taskList"),
+        listSummary: document.getElementById("listSummary"),
+        searchInput: document.getElementById("searchInput"),
+        statusFilter: document.getElementById("statusFilter"),
+        sortSelect: document.getElementById("sortSelect"),
+        clearCompletedButton: document.getElementById("clearCompletedButton"),
+
+        specDialog: document.getElementById("specDialog"),
+        openSpecButton: document.getElementById("openSpecButton"),
+        editDialog: document.getElementById("editDialog"),
+        editForm: document.getElementById("editForm"),
+        editTaskId: document.getElementById("editTaskId"),
+        editTitle: document.getElementById("editTitle"),
+        editCategory: document.getElementById("editCategory"),
+        editDue: document.getElementById("editDue"),
+        editImportance: document.getElementById("editImportance"),
+        editImportanceOutput: document.getElementById("editImportanceOutput"),
+        editHours: document.getElementById("editHours"),
+        editNote: document.getElementById("editNote"),
+
+        themeButton: document.getElementById("themeButton"),
+        todayDate: document.getElementById("todayDate"),
+        todayWeekday: document.getElementById("todayWeekday"),
+
+        toast: document.getElementById("toast"),
+        toastIcon: document.getElementById("toastIcon"),
+        toastMessage: document.getElementById("toastMessage")
+      };
+
+      let tasks = loadTasks();
+      let toastTimer = null;
+
+      function createId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+
+        return `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function storageGet(key) {
+        try {
+          return window.localStorage.getItem(key);
+        } catch (error) {
+          console.warn("瀏覽器目前無法讀取 LocalStorage。", error);
+          return null;
+        }
+      }
+
+      function storageSet(key, value) {
+        try {
+          window.localStorage.setItem(key, value);
+          return true;
+        } catch (error) {
+          console.warn("瀏覽器目前無法寫入 LocalStorage。", error);
+          return false;
+        }
+      }
+
+      function loadTasks() {
+        try {
+          const stored = storageGet(STORAGE_KEY);
+          if (!stored) return [];
+
+          const parsed = JSON.parse(stored);
+          if (!Array.isArray(parsed)) return [];
+
+          return parsed
+            .filter((task) => task && typeof task === "object" && task.id && task.title && task.due)
+            .map((task) => ({
+              id: String(task.id),
+              title: String(task.title),
+              category: CATEGORY_ICONS[task.category] ? task.category : "其他",
+              due: String(task.due),
+              importance: clampNumber(Number(task.importance), 1, 5, 3),
+              hours: clampNumber(Number(task.hours), 0.5, 100, 2),
+              note: String(task.note || ""),
+              completed: Boolean(task.completed),
+              createdAt: Number(task.createdAt) || Date.now(),
+              completedAt: task.completedAt ? Number(task.completedAt) : null
+            }));
+        } catch (error) {
+          console.warn("無法讀取儲存資料，已改用空白清單。", error);
+          return [];
+        }
+      }
+
+      function saveTasks() {
+        const saved = storageSet(STORAGE_KEY, JSON.stringify(tasks));
+        if (!saved) {
+          showToast("任務仍可操作，但瀏覽器目前無法永久儲存資料。", "⚠️");
+        }
+      }
+
+      function clampNumber(value, min, max, fallback) {
+        if (!Number.isFinite(value)) return fallback;
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function escapeHTML(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function toLocalInputValue(date) {
+        const pad = (number) => String(number).padStart(2, "0");
+        return [
+          date.getFullYear(),
+          "-",
+          pad(date.getMonth() + 1),
+          "-",
+          pad(date.getDate()),
+          "T",
+          pad(date.getHours()),
+          ":",
+          pad(date.getMinutes())
+        ].join("");
+      }
+
+      function setDefaultDueDate() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(23, 59, 0, 0);
+        elements.taskDue.value = toLocalInputValue(tomorrow);
+      }
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        if (Number.isNaN(date.getTime())) return "日期格式錯誤";
+
+        return new Intl.DateTimeFormat("zh-TW", {
+          month: "numeric",
+          day: "numeric",
+          weekday: "short",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(date);
+      }
+
+      function getTimeLeft(task) {
+        return new Date(task.due).getTime() - Date.now();
+      }
+
+      function getRelativeTime(task) {
+        const diff = getTimeLeft(task);
+        const absolute = Math.abs(diff);
+
+        if (diff < 0) {
+          if (absolute >= 86400000) {
+            return `已逾期 ${Math.ceil(absolute / 86400000)} 天`;
+          }
+
+          return `已逾期 ${Math.max(1, Math.ceil(absolute / 3600000))} 小時`;
+        }
+
+        if (diff < 3600000) {
+          return `剩 ${Math.max(1, Math.ceil(diff / 60000))} 分鐘`;
+        }
+
+        if (diff < 86400000) {
+          return `剩 ${Math.ceil(diff / 3600000)} 小時`;
+        }
+
+        return `剩 ${Math.ceil(diff / 86400000)} 天`;
+      }
+
+      function getPriorityScore(task) {
+        if (task.completed) return -1;
+
+        const hoursLeft = getTimeLeft(task) / 3600000;
+        let urgency = 10;
+
+        if (hoursLeft < 0) urgency = 80;
+        else if (hoursLeft <= 12) urgency = 70;
+        else if (hoursLeft <= 24) urgency = 60;
+        else if (hoursLeft <= 72) urgency = 50;
+        else if (hoursLeft <= 168) urgency = 35;
+        else if (hoursLeft <= 336) urgency = 20;
+
+        const importance = task.importance * 10;
+        const workload = Math.min(20, task.hours * 2);
+        const remainingDays = Math.max(0.25, hoursLeft / 24);
+        const timePressure = hoursLeft < 0
+          ? 20
+          : Math.min(20, (task.hours / remainingDays) * 5);
+
+        return Math.round(urgency + importance + workload + timePressure);
+      }
+
+      function getPriorityMeta(task) {
+        if (task.completed) {
+          return { label: "已完成", className: "priority-low" };
+        }
+
+        const score = getPriorityScore(task);
+
+        if (score >= 125) return { label: "立即處理", className: "priority-critical" };
+        if (score >= 95) return { label: "高優先", className: "priority-high" };
+        if (score >= 70) return { label: "中優先", className: "priority-medium" };
+        return { label: "可排程", className: "priority-low" };
+      }
+
+      function getDueChipClass(task) {
+        if (task.completed) return "";
+        const diff = getTimeLeft(task);
+        if (diff < 0) return "is-danger";
+        if (diff <= 3 * 86400000) return "is-warning";
+        return "";
+      }
+
+      function getReasons(task) {
+        const reasons = [];
+        const diff = getTimeLeft(task);
+
+        if (diff < 0) reasons.push("已經逾期");
+        else if (diff <= 24 * 3600000) reasons.push("24 小時內到期");
+        else if (diff <= 3 * 86400000) reasons.push("3 天內到期");
+
+        if (task.importance >= 5) reasons.push("重要程度最高");
+        else if (task.importance >= 4) reasons.push("重要程度高");
+
+        if (task.hours >= 6) reasons.push("所需工時很長");
+        else if (task.hours >= 3) reasons.push("需要預留時間");
+
+        const remainingDays = Math.max(0.25, diff / 86400000);
+        if (diff > 0 && task.hours / remainingDays >= 3) {
+          reasons.push("剩餘時間壓力高");
+        }
+
+        if (reasons.length === 0) reasons.push("目前綜合分數最高");
+        return reasons.slice(0, 3);
+      }
+
+      function renderStats() {
+        const total = tasks.length;
+        const completed = tasks.filter((task) => task.completed).length;
+        const active = total - completed;
+        const overdue = tasks.filter((task) => !task.completed && getTimeLeft(task) < 0).length;
+        const rate = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+        elements.activeCount.textContent = active;
+        elements.completedCount.textContent = completed;
+        elements.overdueCount.textContent = overdue;
+        elements.completionRate.textContent = `${rate}%`;
+        elements.progressBar.style.width = `${rate}%`;
+        elements.clearCompletedButton.disabled = completed === 0;
+        elements.clearCompletedButton.style.opacity = completed === 0 ? "0.48" : "1";
+      }
+
+      function renderRecommendation() {
+        const activeTasks = tasks
+          .filter((task) => !task.completed)
+          .sort((a, b) => getPriorityScore(b) - getPriorityScore(a));
+
+        if (tasks.length === 0) {
+          elements.recommendationContent.innerHTML = `
+            <div class="recommendation-empty">
+              <div>
+                <div class="empty-icon" aria-hidden="true">🗂️</div>
+                <h3>先把腦中的事情放進來</h3>
+                <p>新增任務後，我會自動找出現在最值得先完成的一件。</p>
+                <a class="btn btn-primary btn-small" href="#addTaskSection">新增任務</a>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        if (activeTasks.length === 0) {
+          elements.recommendationContent.innerHTML = `
+            <div class="recommendation-empty">
+              <div>
+                <div class="empty-icon" aria-hidden="true">🎉</div>
+                <h3>目前任務全部完成！</h3>
+                <p>可以稍微休息一下，或新增下一個要處理的任務。</p>
+                <a class="btn btn-primary btn-small" href="#addTaskSection">新增任務</a>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        const task = activeTasks[0];
+        const score = getPriorityScore(task);
+        const relativeTime = getRelativeTime(task);
+        const reasons = getReasons(task);
+
+        elements.recommendationContent.innerHTML = `
+          <div class="recommendation-task">
+            <span class="recommendation-label">🔥 優先分數 ${score}</span>
+            <h3>${escapeHTML(task.title)}</h3>
+            <p>
+              ${escapeHTML(CATEGORY_ICONS[task.category] || "📎")} ${escapeHTML(task.category)}
+              ・${escapeHTML(formatDate(task.due))}
+              ・${escapeHTML(relativeTime)}
+            </p>
+            <div class="reason-list">
+              ${reasons.map((reason) => `<span class="reason-chip">✓ ${escapeHTML(reason)}</span>`).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      function getVisibleTasks() {
+        const query = elements.searchInput.value.trim().toLowerCase();
+        const status = elements.statusFilter.value;
+        const sort = elements.sortSelect.value;
+
+        const filtered = tasks.filter((task) => {
+          const searchable = `${task.title} ${task.category} ${task.note}`.toLowerCase();
+          const matchesQuery = !query || searchable.includes(query);
+
+          let matchesStatus = true;
+          if (status === "active") matchesStatus = !task.completed;
+          if (status === "completed") matchesStatus = task.completed;
+          if (status === "overdue") matchesStatus = !task.completed && getTimeLeft(task) < 0;
+
+          return matchesQuery && matchesStatus;
+        });
+
+        return filtered.sort((a, b) => {
+          if (a.completed !== b.completed) {
+            return Number(a.completed) - Number(b.completed);
+          }
+
+          if (sort === "deadline") {
+            return new Date(a.due).getTime() - new Date(b.due).getTime();
+          }
+
+          if (sort === "importance") {
+            return b.importance - a.importance;
+          }
+
+          if (sort === "created") {
+            return b.createdAt - a.createdAt;
+          }
+
+          if (sort === "name") {
+            return a.title.localeCompare(b.title, "zh-Hant");
+          }
+
+          return getPriorityScore(b) - getPriorityScore(a);
+        });
+      }
+
+      function renderTaskList() {
+        const visibleTasks = getVisibleTasks();
+        const total = tasks.length;
+
+        if (total === 0) {
+          elements.listSummary.textContent = "目前沒有任務，從新增第一個任務開始。";
+          elements.taskList.innerHTML = `
+            <div class="empty-state">
+              <div>
+                <div class="empty-state-icon" aria-hidden="true">📝</div>
+                <h3>你的任務清單還是空的</h3>
+                <p>可以先新增真實任務，或載入範例資料看看完整互動效果。</p>
+                <button class="btn btn-primary js-load-sample" type="button">🧪 載入範例資料</button>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        elements.listSummary.textContent =
+          visibleTasks.length === total
+            ? `共 ${total} 項任務，待處理 ${tasks.filter((task) => !task.completed).length} 項。`
+            : `找到 ${visibleTasks.length} 項符合條件的任務。`;
+
+        if (visibleTasks.length === 0) {
+          elements.taskList.innerHTML = `
+            <div class="empty-state">
+              <div>
+                <div class="empty-state-icon" aria-hidden="true">🔍</div>
+                <h3>找不到符合條件的任務</h3>
+                <p>可以調整搜尋文字或狀態篩選。</p>
+                <button class="btn btn-secondary" id="resetFiltersButton" type="button">清除篩選</button>
+              </div>
+            </div>
+          `;
+          document.getElementById("resetFiltersButton")?.addEventListener("click", resetFilters);
+          return;
+        }
+
+        elements.taskList.innerHTML = visibleTasks.map((task) => {
+          const score = getPriorityScore(task);
+          const priority = getPriorityMeta(task);
+          const overdue = !task.completed && getTimeLeft(task) < 0;
+          const categoryIcon = CATEGORY_ICONS[task.category] || "📎";
+          const stars = "★".repeat(task.importance) + "☆".repeat(5 - task.importance);
+
+          return `
+            <article
+              class="task-card ${priority.className} ${task.completed ? "is-completed" : ""} ${overdue ? "is-overdue" : ""}"
+              data-task-id="${escapeHTML(task.id)}"
+            >
+              <div class="task-main">
+                <div class="task-topline">
+                  <span class="category-chip">${categoryIcon} ${escapeHTML(task.category)}</span>
+                  <span class="score-chip">${escapeHTML(priority.label)}${task.completed ? "" : `・${score} 分`}</span>
+                </div>
+
+                <h3 class="task-title">${escapeHTML(task.title)}</h3>
+                ${task.note ? `<p class="task-note">${escapeHTML(task.note)}</p>` : ""}
+
+                <div class="task-meta">
+                  <span class="meta-chip ${getDueChipClass(task)}">
+                    ⏰ ${escapeHTML(formatDate(task.due))}・${escapeHTML(getRelativeTime(task))}
+                  </span>
+                  <span class="meta-chip" title="重要程度 ${task.importance} / 5">
+                    ⭐ ${stars}
+                  </span>
+                  <span class="meta-chip">🛠️ 約 ${Number(task.hours).toFixed(task.hours % 1 ? 1 : 0)} 小時</span>
+                </div>
+              </div>
+
+              <div class="task-actions">
+                <button
+                  class="btn ${task.completed ? "btn-secondary" : "btn-primary"} btn-small"
+                  type="button"
+                  data-action="toggle"
+                  data-id="${escapeHTML(task.id)}"
+                >
+                  ${task.completed ? "↩ 恢復" : "✓ 完成"}
+                </button>
+                <button
+                  class="btn btn-secondary btn-small"
+                  type="button"
+                  data-action="edit"
+                  data-id="${escapeHTML(task.id)}"
+                >
+                  ✏️ 編輯
+                </button>
+                <button
+                  class="btn btn-danger btn-small"
+                  type="button"
+                  data-action="delete"
+                  data-id="${escapeHTML(task.id)}"
+                >
+                  🗑 刪除
+                </button>
+              </div>
+            </article>
+          `;
+        }).join("");
+      }
+
+      function renderAll() {
+        renderStats();
+        renderRecommendation();
+        renderTaskList();
+      }
+
+      function addTask(event) {
+        event.preventDefault();
+
+        const title = elements.taskTitle.value.trim();
+        const due = elements.taskDue.value;
+        const importance = Number(elements.taskImportance.value);
+        const hours = Number(elements.taskHours.value);
+
+        if (!title || !due || !Number.isFinite(hours) || hours < 0.5) {
+          showToast("請完整填寫任務名稱、截止時間與預估工時。", "⚠️");
+          return;
+        }
+
+        tasks.push({
+          id: createId(),
+          title,
+          category: elements.taskCategory.value,
+          due,
+          importance,
+          hours,
+          note: elements.taskNote.value.trim(),
+          completed: false,
+          createdAt: Date.now(),
+          completedAt: null
+        });
+
+        saveTasks();
+        renderAll();
+        elements.taskForm.reset();
+        elements.taskImportance.value = "3";
+        elements.importanceOutput.textContent = "3";
+        elements.taskHours.value = "2";
+        setDefaultDueDate();
+        elements.taskTitle.focus();
+        showToast("任務已加入，優先順序已重新計算。", "✅");
+      }
+
+      function toggleTask(id) {
+        const task = tasks.find((item) => item.id === id);
+        if (!task) return;
+
+        task.completed = !task.completed;
+        task.completedAt = task.completed ? Date.now() : null;
+
+        saveTasks();
+        renderAll();
+        showToast(task.completed ? "做得好，任務已完成！" : "任務已恢復到待處理。", task.completed ? "🎉" : "↩️");
+      }
+
+      function deleteTask(id) {
+        const task = tasks.find((item) => item.id === id);
+        if (!task) return;
+
+        const confirmed = window.confirm(`確定要刪除「${task.title}」嗎？`);
+        if (!confirmed) return;
+
+        tasks = tasks.filter((item) => item.id !== id);
+        saveTasks();
+        renderAll();
+        showToast("任務已刪除。", "🗑️");
+      }
+
+      function openEditTask(id) {
+        const task = tasks.find((item) => item.id === id);
+        if (!task) return;
+
+        elements.editTaskId.value = task.id;
+        elements.editTitle.value = task.title;
+        elements.editCategory.value = task.category;
+        elements.editDue.value = task.due;
+        elements.editImportance.value = String(task.importance);
+        elements.editImportanceOutput.textContent = String(task.importance);
+        elements.editHours.value = String(task.hours);
+        elements.editNote.value = task.note;
+
+        openDialog(elements.editDialog);
+      }
+
+      function saveEditedTask(event) {
+        event.preventDefault();
+
+        const id = elements.editTaskId.value;
+        const task = tasks.find((item) => item.id === id);
+        if (!task) return;
+
+        const title = elements.editTitle.value.trim();
+        const due = elements.editDue.value;
+        const hours = Number(elements.editHours.value);
+
+        if (!title || !due || !Number.isFinite(hours) || hours < 0.5) {
+          showToast("請完整填寫必要欄位。", "⚠️");
+          return;
+        }
+
+        task.title = title;
+        task.category = elements.editCategory.value;
+        task.due = due;
+        task.importance = Number(elements.editImportance.value);
+        task.hours = hours;
+        task.note = elements.editNote.value.trim();
+
+        saveTasks();
+        renderAll();
+        closeDialog(elements.editDialog);
+        showToast("任務內容已更新。", "✅");
+      }
+
+      function clearCompletedTasks() {
+        const count = tasks.filter((task) => task.completed).length;
+        if (count === 0) return;
+
+        const confirmed = window.confirm(`確定要清除 ${count} 項已完成任務嗎？`);
+        if (!confirmed) return;
+
+        tasks = tasks.filter((task) => !task.completed);
+        saveTasks();
+        renderAll();
+        showToast(`已清除 ${count} 項完成紀錄。`, "🧹");
+      }
+
+      function loadSampleTasks() {
+        const confirmed = tasks.length === 0 || window.confirm("範例資料會新增到目前清單中，確定要繼續嗎？");
+        if (!confirmed) return;
+
+        const now = new Date();
+        const future = (hours) => {
+          const date = new Date(now.getTime() + hours * 3600000);
+          return toLocalInputValue(date);
+        };
+
+        const sampleTasks = [
+          {
+            title: "完成 Vibe Coding 作業並上傳 GitHub Pages",
+            category: "作業",
+            due: "2026-10-19T23:59",
+            importance: 5,
+            hours: 4,
+            note: "繳交期限為 10/19 23:59；確認 index.html 功能、公開連結、介面截圖與規格文字說明。",
+            completed: false
+          },
+          {
+            title: "準備實驗室 Meeting 簡報",
+            category: "報告",
+            due: future(20),
+            importance: 4,
+            hours: 3,
+            note: "整理本週進度與下一步計畫。",
+            completed: false
+          },
+          {
+            title: "回覆指導教授的信件",
+            category: "會議",
+            due: future(5),
+            importance: 5,
+            hours: 0.5,
+            note: "確認下週討論時間。",
+            completed: false
+          },
+          {
+            title: "閱讀兩篇半導體製程相關論文",
+            category: "研究",
+            due: future(132),
+            importance: 3,
+            hours: 2.5,
+            note: "每篇整理三個重點與一個問題。",
+            completed: false
+          },
+          {
+            title: "整理上週課堂筆記",
+            category: "作業",
+            due: future(-24),
+            importance: 2,
+            hours: 1,
+            note: "已完成，保留作為完成率範例。",
+            completed: true
+          }
+        ];
+
+        tasks.push(
+          ...sampleTasks.map((task, index) => ({
+            ...task,
+            id: createId(),
+            createdAt: Date.now() + index,
+            completedAt: task.completed ? Date.now() : null
+          }))
+        );
+
+        saveTasks();
+        renderAll();
+        showToast("已載入 5 筆範例任務，可以開始操作。", "🧪");
+      }
+
+      function resetFilters() {
+        elements.searchInput.value = "";
+        elements.statusFilter.value = "all";
+        elements.sortSelect.value = "priority";
+        renderTaskList();
+      }
+
+      function showToast(message, icon = "✅") {
+        elements.toastMessage.textContent = message;
+        elements.toastIcon.textContent = icon;
+        elements.toast.classList.add("is-visible");
+
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => {
+          elements.toast.classList.remove("is-visible");
+        }, 2800);
+      }
+
+      function openDialog(dialog) {
+        if (typeof dialog.showModal === "function") {
+          dialog.showModal();
+        } else {
+          dialog.setAttribute("open", "");
+        }
+      }
+
+      function closeDialog(dialog) {
+        if (typeof dialog.close === "function") {
+          dialog.close();
+        } else {
+          dialog.removeAttribute("open");
+        }
+      }
+
+      function setupTheme() {
+        const saved = storageGet(THEME_KEY);
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const theme = saved || (prefersDark ? "dark" : "light");
+        applyTheme(theme);
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        const isDark = theme === "dark";
+        elements.themeButton.textContent = isDark ? "☀️" : "🌙";
+        elements.themeButton.setAttribute("aria-label", isDark ? "切換淺色模式" : "切換深色模式");
+        elements.themeButton.title = isDark ? "切換淺色模式" : "切換深色模式";
+      }
+
+      function toggleTheme() {
+        const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        storageSet(THEME_KEY, next);
+        applyTheme(next);
+      }
+
+      function renderToday() {
+        const now = new Date();
+        elements.todayDate.textContent = new Intl.DateTimeFormat("zh-TW", {
+          month: "long",
+          day: "numeric"
+        }).format(now);
+
+        elements.todayWeekday.textContent = new Intl.DateTimeFormat("zh-TW", {
+          weekday: "long",
+          year: "numeric"
+        }).format(now);
+      }
+
+      elements.taskForm.addEventListener("submit", addTask);
+      elements.taskImportance.addEventListener("input", () => {
+        elements.importanceOutput.textContent = elements.taskImportance.value;
+      });
+
+      elements.resetFormButton.addEventListener("click", () => {
+        window.setTimeout(() => {
+          elements.taskImportance.value = "3";
+          elements.importanceOutput.textContent = "3";
+          elements.taskHours.value = "2";
+          setDefaultDueDate();
+        }, 0);
+      });
+
+      elements.taskList.addEventListener("click", (event) => {
+        const actionButton = event.target.closest("[data-action]");
+        if (actionButton) {
+          const { action, id } = actionButton.dataset;
+          if (action === "toggle") toggleTask(id);
+          if (action === "edit") openEditTask(id);
+          if (action === "delete") deleteTask(id);
+          return;
+        }
+
+        const sampleButton = event.target.closest(".js-load-sample");
+        if (sampleButton) loadSampleTasks();
+      });
+
+      document.querySelectorAll(".js-load-sample").forEach((button) => {
+        button.addEventListener("click", loadSampleTasks);
+      });
+
+      elements.searchInput.addEventListener("input", renderTaskList);
+      elements.statusFilter.addEventListener("change", renderTaskList);
+      elements.sortSelect.addEventListener("change", renderTaskList);
+      elements.clearCompletedButton.addEventListener("click", clearCompletedTasks);
+
+      elements.openSpecButton.addEventListener("click", () => openDialog(elements.specDialog));
+      document.querySelectorAll(".js-close-spec").forEach((button) => {
+        button.addEventListener("click", () => closeDialog(elements.specDialog));
+      });
+
+      elements.editForm.addEventListener("submit", saveEditedTask);
+      elements.editImportance.addEventListener("input", () => {
+        elements.editImportanceOutput.textContent = elements.editImportance.value;
+      });
+      document.querySelectorAll(".js-close-edit").forEach((button) => {
+        button.addEventListener("click", () => closeDialog(elements.editDialog));
+      });
+
+      [elements.specDialog, elements.editDialog].forEach((dialog) => {
+        dialog.addEventListener("click", (event) => {
+          const rect = dialog.getBoundingClientRect();
+          const clickedOutside =
+            event.clientX < rect.left ||
+            event.clientX > rect.right ||
+            event.clientY < rect.top ||
+            event.clientY > rect.bottom;
+
+          if (clickedOutside) closeDialog(dialog);
+        });
+      });
+
+      elements.themeButton.addEventListener("click", toggleTheme);
+
+      setDefaultDueDate();
+      setupTheme();
+      renderToday();
+      renderAll();
+
+      window.setInterval(() => {
+        renderToday();
+        renderAll();
+      }, 60000);
+    })();
+  </script>
+</body>
+</html>
